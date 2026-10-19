@@ -1,0 +1,37 @@
+"use client";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { AlertTriangle, ArrowLeft, Box, CalendarDays, ChevronRight, CircleAlert, GitCommitHorizontal, Gauge, Wrench } from "lucide-react";
+import { DataStateView } from "@/components/data-state-view";
+import { CoverageView } from "@/components/coverage-view";
+import { useLocale } from "@/components/locale-provider";
+import { OfflineBanner } from "@/components/offline-banner";
+import { IntervalView } from "@/components/interval-view";
+import { PortalApiError, portalFetch } from "@/lib/api-client";
+import type { ComponentDetail, IdentityType } from "@/lib/domain";
+import type { Dictionary } from "@/lib/portal-i18n";
+
+export function ComponentWorkspace({ identityType, identity, componentCode }: { identityType: IdentityType; identity: string; componentCode: string }) {
+  const { messages, locale } = useLocale(); const params = useSearchParams();
+  const query = useQuery({ queryKey: ["component", identityType, identity, componentCode], queryFn: () => portalFetch<ComponentDetail>(`/api/portal/vehicles/${identityType}/${encodeURIComponent(identity)}/components/${encodeURIComponent(componentCode)}`) });
+  if (query.isLoading) return <main className="loading-page">{messages.common.loading}</main>;
+  if (query.isError || !query.data) return <main className="error-page"><AlertTriangle /><h1>{messages.common.error}</h1><p>{query.error?.message}{query.error instanceof PortalApiError && query.error.errorId ? ` · ${messages.common.errorId}: ${query.error.errorId}` : ""}</p><button className="button" onClick={() => void query.refetch()}>{messages.common.retry}</button></main>;
+  const detail = query.data.data; const returnScope = params.get("returnScope"); const back = `${detail.vehicle.canonicalPath}${returnScope ? `?scope=${encodeURIComponent(returnScope)}` : ""}`;
+  return <main className="component-page">{query.data.offline && <OfflineBanner cachedAt={query.data.cachedAt} />}
+    <div className="crumb"><Link href={back}><ArrowLeft />{messages.vehicle.overview}</Link><ChevronRight /><span>{detail.component.nameZh}</span></div>
+    <section className="component-hero"><div><span className="eyebrow">{componentCode}</span><h1>{detail.component.nameZh}</h1><p>{detail.ancestry.map((node) => node.nameZh).join(" / ")}</p></div><div className="component-vehicle"><span className="plate">{detail.vehicle.plate}</span><strong>{detail.vehicle.manufacturer} {detail.vehicle.model}</strong><small>VIN {detail.vehicle.vin ?? "-"}</small></div></section>
+    <section className="summary-ribbon">{Object.entries(detail.summary).slice(0, 10).map(([key, value]) => <div key={key}><strong>{value}</strong><span>{summaryLabel(key, messages)}</span></div>)}</section>
+    <div className="detail-grid"><section className="panel wide"><Title icon={<CalendarDays />} text={messages.component.events} /><DataStateView state={detail.events} render={(items) => <div className="event-list compact">{items.map((event) => { const occurred = event.occurredAt ?? event.occurredAtUpperBound; return <article key={event.id}><div className={`event-mark ${event.type}`} /><div><div className="event-head"><strong>{event.descriptionZh ?? event.type}</strong><span>{occurred ? new Date(occurred).toLocaleDateString(locale) : "-"}</span></div><p>{event.type} · {event.orderNo ?? "-"} · {event.odometer ?? event.odometerUpperBound ?? "-"} km</p></div></article>; })}</div>} /></section>
+      <section className="panel"><Title icon={<Wrench />} text={messages.component.orders} /><DataStateView state={detail.orders} render={(items) => <div className="record-list">{items.map((order) => <article key={order.orderNo}><strong>{order.orderNo}</strong><span>{order.orderTypeNameZh ?? order.orderTypeCode ?? "-"}</span><small>{order.submittedAt ?? "-"} · {order.submitMileage ?? "-"} km</small></article>)}</div>} /></section>
+      <section className="panel"><Title icon={<Box />} text={messages.component.parts} /><DataStateView state={detail.parts} render={(items) => <div className="record-list">{items.map((part) => <article key={part.id}><strong>{part.partName ?? part.partNo ?? part.partId ?? "-"}</strong><span>{part.partNo ?? "-"}</span><small>{messages.component.quantity}: {part.quantity ?? "-"}</small></article>)}</div>} /></section>
+      <section className="panel wide"><Title icon={<GitCommitHorizontal />} text={messages.component.instances} /><DataStateView state={detail.instances} render={(items) => <div className="table-wrap"><table><thead><tr><th>{messages.component.generation}</th><th>{messages.component.state}</th><th>{messages.component.installed}</th><th>{messages.component.removed}</th><th>{messages.component.quantity}</th></tr></thead><tbody>{items.map((item) => <tr key={item.id}><td>{item.generation ?? "-"}</td><td>{item.currentState ?? "-"}</td><td>{item.installedAt ?? "-"}<small>{item.installedMileage === null ? "" : `${item.installedMileage} km`}</small></td><td>{item.removedAt ?? "-"}<small>{item.removedMileage === null ? "" : `${item.removedMileage} km`}</small></td><td>{item.quantity ?? "-"}</td></tr>)}</tbody></table></div>} /></section>
+      <section className="panel"><Title icon={<GitCommitHorizontal />} text={messages.component.transitions} /><DataStateView state={detail.transitions} render={(items) => <div className="record-list">{items.map((item) => <article key={item.id}><strong>{item.transitionType ?? (item.fromState || item.toState ? `${item.fromState ?? "-"} → ${item.toState ?? "-"}` : "-")}</strong><span>{item.reason ?? item.eventType ?? "-"}</span><small>{item.occurredAt ?? item.occurredAtUpperBound ?? "-"}{item.odometer === null ? "" : ` · ${item.odometer} km`}</small></article>)}</div>} /></section>
+      <section className="panel"><Title icon={<Gauge />} text={messages.component.intervals} /><DataStateView state={detail.intervals} render={(items) => <IntervalView time={items.time} mileage={items.mileage} />} /></section>
+      <section className="panel"><Title icon={<Gauge />} text={messages.component.coverage} /><DataStateView state={detail.coverage} render={(item) => <CoverageView windows={item.windows} gaps={item.gaps} />} /></section>
+      <section className="panel"><Title icon={<CircleAlert />} text={messages.component.quality} /><DataStateView state={detail.quality} render={(items) => <div className="record-list">{items.map((item) => <article key={item.id}><strong>{item.issueType ?? "-"}</strong><span>{item.message ?? "-"}</span><small>{messages.component.severity}: {item.severity ?? "-"}</small></article>)}</div>} /></section>
+    </div>
+  </main>;
+}
+function Title({ icon, text }: { icon: React.ReactNode; text: string }) { return <div className="panel-title"><span>{icon}</span><h2>{text}</h2></div>; }
+function summaryLabel(value: string, messages: Dictionary): string { const labels: Record<string, string> = { events: messages.summaryMetrics.events, faults: messages.summaryMetrics.faults, actions: messages.summaryMetrics.actions, part_events: messages.summaryMetrics.partEvents, orders: messages.summaryMetrics.orders, parts: messages.summaryMetrics.parts, instances: messages.summaryMetrics.instances, transitions: messages.summaryMetrics.transitions, intervals: messages.summaryMetrics.intervals, quality_issues: messages.summaryMetrics.qualityIssues }; return labels[value] ?? value; }
