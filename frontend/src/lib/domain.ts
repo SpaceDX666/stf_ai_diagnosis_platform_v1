@@ -207,3 +207,24 @@ export interface VehicleDirectoryResponse {
     componentInstances: number;
   };
 }
+
+export interface VehicleVerificationSuggestion {
+  plate: string;
+  vinState: "ready" | "pending_source";
+}
+
+export interface VehicleVerificationCandidate {
+  plate: string;
+  vin: string | null;
+  manufacturer: string;
+  model: string;
+  verifiable: boolean;
+}
+
+export interface VehicleVerificationContext {
+  plate: string;
+  vin: string;
+  manufacturer: string;
+  model: string;
+  canonicalPath: string;
+}

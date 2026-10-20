@@ -22,18 +22,20 @@ export default defineConfig({
     {
       command: "node tests/fixtures/mock-twin.mjs",
       url: "http://127.0.0.1:4010/health",
-      reuseExistingServer: false,
+      reuseExistingServer: process.env.PW_REUSE_SERVER === "1",
       timeout: 30_000,
     },
     {
       command: "npm run start",
       url: "http://127.0.0.1:3001/api/health",
-      reuseExistingServer: false,
+      reuseExistingServer: process.env.PW_REUSE_SERVER === "1",
       timeout: 120_000,
       env: {
         PORT: "3001",
         VEHICLE_TWIN_API_BASE_URL: "http://127.0.0.1:4010",
+        STF_V3_API_BASE_URL: "http://127.0.0.1:4010",
         PORTAL_PUBLIC_ORIGIN: "http://127.0.0.1:3001",
+        PORTAL_VEHICLE_SESSION_SECRET: "playwright-vehicle-session-secret-32-characters",
       },
     },
   ],
