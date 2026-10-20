@@ -23,25 +23,31 @@
 
 ## 本地開發
 
-需要 Node.js 24、npm 11，以及已構建資料的 `E:\vehicle_data_twin`。
+需要 Node.js 24、npm 11，以及已構建資料的 `vehicle_data_twin` 檢出目錄。
 
-第一個終端啟動只讀車輛平台：
+第一個終端進入 `vehicle_data_twin` 的檢出根目錄，再啟動只讀車輛平台：
 
 ```powershell
-Set-Location -LiteralPath 'E:\vehicle_data_twin'
 node .\src\server.mjs --no-open
 ```
 
-第二個終端啟動門戶：
+第二個終端進入本倉庫的 `frontend` 目錄，再啟動門戶：
 
 ```powershell
-Set-Location -LiteralPath 'E:\stf_ai_diagnosis_platform_v3\frontend'
 Copy-Item -LiteralPath '.env.example' -Destination '.env.local'
 npm ci
 npm run dev
 ```
 
 開啟 `http://127.0.0.1:3001`。
+
+### Windows 一鍵啟動
+
+完成下方一次性設定後，可以在文件資源管理器中雙擊 `OBD Expert.cmd`。啟動器會依次確認 PostgreSQL、V3 登入 API 和前端；需要時分別在獨立且可見的命令窗口啟動 V3 API 與 `npm run dev`。只有資料庫可連線、`http://127.0.0.1:8002/health` 與 V3 OpenAPI 正常，而且登入頁已就緒時，才會以 Windows 預設瀏覽器開啟 `http://127.0.0.1:3001/login`。
+
+重複雙擊會復用已驗證的服務，不會建立重複進程。停止時在相應的 V3 API 或前端窗口按 `Ctrl+C`，或直接關閉窗口；PostgreSQL 仍作為 Windows 服務運行。若 5432、8002 或 3001 被其他程序佔用，啟動器只會提示衝突，不會終止對方，也不會在登入鏈路未就緒時打開瀏覽器。
+
+一次性設定需要 Node.js 24、npm 11、Python 3.12、PostgreSQL 15、`frontend/node_modules`、`stf_v3/.venv` 和已遷移的 `stf_v3` 資料庫。安裝 Python 與 PostgreSQL 後，可在 PowerShell 執行 `stf_v3/scripts/setup_local_windows.ps1`；它會在本機安全提示 PostgreSQL 管理員密碼、產生隨機服務密鑰、建立低權限資料庫角色並執行遷移。密鑰不存放在倉庫，而是寫入 `%LOCALAPPDATA%\OBD Expert\stf_v3.env`，並限制為目前 Windows 用戶可讀。啟動器不會日常安裝軟件或執行資料庫遷移，也不啟動診斷 worker、LLM 或車輛資料平台。登入接口在線不代表資料庫已有帳號；空資料庫中的任意用戶名稱都會得到正常的憑據錯誤，需另行建立工作坊、邀請碼和用戶後才能成功登入。
 
 | 變數 | 用途 |
 | --- | --- |
