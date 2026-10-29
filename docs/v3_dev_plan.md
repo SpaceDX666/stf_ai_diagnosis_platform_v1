@@ -4,11 +4,11 @@
 
 | 字段 | 值 |
 |---|---|
-| **架构文档** | `docs/v3_design_doc.md`（v1.22） |
+| **架构文档** | `docs/v3_design_doc.md`（v1.23） |
 | **架构图** | `docs/diagrams/stf_v3_final_architecture.excalidraw`（图文强制同步；预览由 `diagrams/render_excalidraw.py` 生成） |
 | **决策存档** | `.lavish/v3_dev_plan_decisions.html`（D1–D9，2026-09-08，本地不提交） |
 | **Ticket 前缀** | `PROD-XX` |
-| **版本** | v1.25（PR #269 前端测试 VIN 白名单修复） |
+| **版本** | v1.26（PR #269 夜间 V3 镜像测试修复） |
 | **作者** | Xiangzhu Yan |
 | **最后更新** | 2026-10-29 |
 
@@ -225,12 +225,13 @@ Status: **✅ DONE**（2026-09-11，分支 `prod-03-backend-skeleton`；服务�
 
 Status: **✅ DONE**（2026-09-13，分支 `prod-04-deploy-ci`；计划页 `.lavish/prod04_plan_review.html` D1 = 对外可达、D2 = GitHub Actions）
 **做了**：`stf-v3-api` + `stf-v3-worker` 常驻（独立 Compose 项目 `-p stf_v3`，镜像带 git commit 标签；worker 跑空的 procrastinate 应用 + 每分钟心跳）；nginx 新增 `upstream api_v3` + `/v3/auth/`（复用 auth 限流）+ `/v3/`（SSE 参数），V1/V2 块未动；`/v3/health` 别名（含 commit）；`.github/workflows/v3.yml` 四个 job（unit+contract、integration 临时 Postgres 15、portable、unbound 每晚）；`scripts/deploy_check.sh`（5 项）、`check_portable.sh`、`check_unbound.sh`；冒烟改走 `/v3/health` 并在 8003 + 一次性库上跑；CLAUDE.md 新增 V3 部署段；服务器 `infra/.env` 补三项密钥（不入库）。
+**PR #269 评审回归（2026-10-29）**：`test_setup_local_windows.py` 的前端启动器检查改为上下文感知——只含 `stf_v3/`、没有 `.git` 与 `frontend/` 的镜像或便携副本明确跳过；完整 Git 检出缺少启动器仍以 `FileNotFoundError` 失败。两种上下文都有回归测试。
 **服务器结果**：deploy_check 5/5 PASS；失败演练：commit 不匹配 FAIL（推脚本未重建时自然出现）、worker 停止 FAIL（心跳 + 容器状态）；`/v3/health`、`/v3/docs` 服务器内与公网（stf-diagnosis.dev）均 200，V1 `/health` 与旧前端 200；API 重启 3 s 恢复；冒烟 23/23 PASS（8003 + stf_v3_test），正式库 smoke 残留 0；只读探测 openapi 200 / 错密码 400 / 无 token 401；日志无密钥；隔离回归 PASS。
 **抓到的问题（已修）**：① podman-compose 默认项目名 = 目录名 `infra`，V3 被放进 V1/V2 同一个 pod，`down` 试图拆共享 pod → 一律 `-p stf_v3`；② nginx.conf 是单文件 bind 挂载，`git pull` 换 inode 后容器内仍是旧文件，`nginx -s reload` 无效 → 改配置必须重建 nginx 容器；③ deploy_check 容器年龄计算丢时区 → 修。
 
 **目标**：V3 后端在 PolyU 服务器上与 V1/V2 并存运行；每个 PR 自动跑测试和两条迁移性检查。
 **方法**：`infra/docker-compose.v3.yml`（`stf-v3-api`、`stf-v3-worker`，独立端口）+ nginx 路由前缀；共用 Postgres 实例与 vLLM（配置连接）；GitHub Actions：pytest（离线）+ OpenAPI diff + 可迁出检查（拷贝两目录到空目录跑测试）+ 不绑死检查（临时检出删除老目录后构建）；部署步骤追加到 CLAUDE.md。
-**验收**：服务器上 V1/V2/V3 健康检查同时通过；Cloudflare 隧道能访问 V3 `/health`；CI 四项在 PR 上绿灯。
+**验收**：服务器上 V1/V2/V3 健康检查同时通过；Cloudflare 隧道能访问 V3 `/health`；CI 四项在 PR 上绿灯；V3 镜像 pytest 不因未打包 `frontend/` 失败，完整 Git 检出仍验证启动器存在及安全环境加载。
 
 ### 3.3 M2 — 数据入口
 
@@ -525,6 +526,7 @@ PROD-15 于 2026-09-27 按用户决定拆为两张：**15A 运维底线**（纯�
 | 版本 | 日期 | 变更 |
 |---|---|---|
 | v0.1 | 2026-09-07 | 初稿：7 个里程碑、15 张 PROD ticket（PROD-01 到验收级，其余到目标/方法/验收层）、非目标清单草案、9 项待决策 |
+| v1.26 | 2026-10-29 | PR #269 评审项“2. 夜间镜像测试会失败”：按 V3 镜像布局复现 `frontend/scripts/start-obd-expert.ps1` 的 `FileNotFoundError`；启动器源码检查仅在非 Git 镜像/便携副本缺少 `frontend/` 时跳过，完整 Git 检出缺文件仍失败；新增双上下文回归测试。PROD-04 的 nightly unbound 验收口径同步，范围与架构未变化，**图无需改动** |
 | v1.25 | 2026-10-29 | PR #269 评审修复：PROD-12 的前端 fixture、单元/BFF 测试、E2E 路由与 10 张受影响基准截图统一改用两个项目固定假 VIN；保留无 VIN 的 `pending_source` 场景，未引入真实车辆 VIN；`vin-scan` 与前端测试重新通过。范围、暂缓事项和架构均未变化，**图无需改动** |
 | v1.24 | 2026-10-29 | 按 PR #269 完整 diff 补记 M5：PROD-12 已有门户骨架、V3 BFF 登录、twin 只读车目录/四字段核验/车辆页与移动桌面测试，但缺注册、建车及完整 E2E；PROD-13 的上传/流式诊断/回放/报告/引用均未实现；PROD-14 已有 manifest、静态离线壳与响应式页面，但缺移动端安装、Lighthouse 与弱网上传验收。§4 记录门户直连 twin 后 V3 history/Agent 仍暂缓、自由文本 PII 回头条件和 `frontend/` vs `obd-ui-v3/` 冲突。同步设计文档 v1.21 与架构图，**图已同步** |
 | v1.23 | 2026-09-28 | **PROD-15A 完成**（PR #261 备份与恢复、#262 演练数据卷、#263 其余；main 已部署，部署检查全过、隔离 PASS）。#263 的门槛评测手册 lane 未过，同窗口 main 对照证明为共享显卡下的波动、非该 PR 引起，用户决定 `eval-exempt`；跟进 #264。之后的例行事项：首批非零计数出现时核对后再打开 `maintenance.apply`（队列约 10 月 12 日、归档约 2027 年 3 月），完整恢复演练每季度一次。仅文档，架构不变，**图无需改动** |
