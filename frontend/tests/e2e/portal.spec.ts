@@ -37,7 +37,7 @@ test("verification is a single progressive form and enters the selected vehicle 
   await expect(page).toHaveScreenshot(`verification-initial-${testInfo.project.name}.png`, { fullPage: true, animations: "disabled" });
 
   await choosePlate(page, "AB1234");
-  await expect(page.getByLabel("VIN")).toHaveValue("JHMCM56557C404453");
+  await expect(page.getByLabel("VIN")).toHaveValue("JHMGK5830HX202404");
   await expect(page.getByLabel(/品牌/)).toHaveValue("HONDA");
   await expect(page.getByLabel(/型號|型号/)).toHaveValue("ACCORD");
   await expect(page.getByRole("button", { name: /驗證並進入車輛主頁|验证并进入车辆主页/ })).toBeEnabled();
@@ -47,7 +47,7 @@ test("verification is a single progressive form and enters the selected vehicle 
   expect(accessibility.violations).toEqual([]);
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
   await page.getByRole("button", { name: /驗證並進入車輛主頁|验证并进入车辆主页/ }).click();
-  await expect(page).toHaveURL(/\/vehicles\/vin\/JHMCM56557C404453$/);
+  await expect(page).toHaveURL(/\/vehicles\/vin\/JHMGK5830HX202404$/);
   await expect(page.getByTestId("vehicle-current-fault-kpi")).toBeVisible();
   expect(await page.evaluate(() => document.cookie)).not.toMatch(/portal_vehicle_context/);
 });
@@ -84,14 +84,14 @@ test("verification comboboxes support keyboard confirmation and model dependency
 
 test("unverified and cross-vehicle URLs return to verification while a valid session survives refresh", async ({ page, context }) => {
   await signIn(page);
-  await page.goto("/vehicles/vin/JHMCM56557C404453");
+  await page.goto("/vehicles/vin/JHMGK5830HX202404");
   await expect(page).toHaveURL(/\/$/);
   await verifyVehicle(page);
   await page.reload();
   await expect(page.getByTestId("vehicle-current-fault-kpi")).toBeVisible();
   const secondPage = await context.newPage();
   await secondPage.goto("/");
-  await expect(secondPage).toHaveURL(/\/vehicles\/vin\/JHMCM56557C404453$/);
+  await expect(secondPage).toHaveURL(/\/vehicles\/vin\/JHMGK5830HX202404$/);
   await secondPage.close();
   await page.goto("/vehicles/plate/UY8280");
   await expect(page).toHaveURL(/\/$/);
@@ -148,7 +148,7 @@ test("logout clears account, vehicle context, and cached data", async ({ page },
 
 test("component detail exposes cleaned lifecycle data", async ({ page }) => {
   await verifyVehicle(page);
-  await page.goto("/vehicles/vin/JHMCM56557C404453/components/CMP-FILTER?returnScope=CMP-FILTER");
+  await page.goto("/vehicles/vin/JHMGK5830HX202404/components/CMP-FILTER?returnScope=CMP-FILTER");
   await expect(page.getByRole("heading", { name: "燃油濾清器" })).toBeVisible();
   await expect(page.getByTestId("component-status").getByText("removed", { exact: true })).toBeVisible();
   await expect(page.getByTestId("current-fault")).toContainText(/歷史故障記錄|历史故障记录/);
@@ -166,7 +166,7 @@ test("component detail exposes cleaned lifecycle data", async ({ page }) => {
 
 test("every BOM node uses the same detail frame and missing values stay explicit", async ({ page }) => {
   await verifyVehicle(page);
-  await page.goto("/vehicles/vin/JHMCM56557C404453/components/CMP-INJECTOR");
+  await page.goto("/vehicles/vin/JHMGK5830HX202404/components/CMP-INJECTOR");
   await expect(page.getByRole("heading", { name: "燃油噴射器" })).toBeVisible();
   await expect(page.getByTestId("component-status").getByText("-", { exact: true }).first()).toBeVisible();
   await expect(page.getByTestId("current-fault")).toContainText("-");
@@ -197,7 +197,7 @@ async function verifyVehicle(page: Page) {
   await signIn(page);
   await choosePlate(page, "AB1234");
   await page.getByRole("button", { name: /驗證並進入車輛主頁|验证并进入车辆主页/ }).click();
-  await expect(page).toHaveURL(/\/vehicles\/vin\/JHMCM56557C404453$/);
+  await expect(page).toHaveURL(/\/vehicles\/vin\/JHMGK5830HX202404$/);
   await page.waitForLoadState("networkidle");
 }
 

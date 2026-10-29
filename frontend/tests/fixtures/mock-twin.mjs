@@ -1,7 +1,7 @@
 import http from "node:http";
 const profiles = [
   { plate: "UY8280", brand: "TOYOTA", model: "COASTER", model_family: "COASTER", vehicle_class: "Light Bus", fuel_type: "Diesel", powertrain_type: "ICE", parking_location: "Kowloon", section: "Operations", orders: 7, events: 9, instances: 3, quality_issues: 1, source_xlsx: "hidden.xlsx", profile_json: "{}" },
-  { plate: "AB1234", vin: "JHMCM56557C404453", brand: "HONDA", model: "ACCORD", model_family: "ACCORD", vehicle_class: "Saloon", fuel_type: "Petrol", powertrain_type: "ICE", parking_location: "Hong Kong", section: "Engineering", orders: 2, events: 3, instances: 1, quality_issues: 0, source_xlsx: "hidden.xlsx", profile_json: "{}" },
+  { plate: "AB1234", vin: "JHMGK5830HX202404", brand: "HONDA", model: "ACCORD", model_family: "ACCORD", vehicle_class: "Saloon", fuel_type: "Petrol", powertrain_type: "ICE", parking_location: "Hong Kong", section: "Engineering", orders: 2, events: 3, instances: 1, quality_issues: 0, source_xlsx: "hidden.xlsx", profile_json: "{}" },
 ];
 const bom = [
   { code: "SYS-ENG", parent_code: null, level: 0, name_zh: "引擎系統", name_en: "Engine system", evidence_state: "observed", confidence: 1 },

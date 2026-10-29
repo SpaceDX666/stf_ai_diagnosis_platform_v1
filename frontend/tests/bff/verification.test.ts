@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DELETE, POST } from "@/app/api/portal/verification/route";
 
-const profile = { plate: "AB1234", vin: "JHMCM56557C404453", brand: "HONDA", model: "ACCORD", vehicle_class: "Saloon", fuel_type: "Petrol", powertrain_type: "ICE" };
+const profile = { plate: "AB1234", vin: "JHMGK5830HX202404", brand: "HONDA", model: "ACCORD", vehicle_class: "Saloon", fuel_type: "Petrol", powertrain_type: "ICE" };
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
