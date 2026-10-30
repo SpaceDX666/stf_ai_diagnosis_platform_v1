@@ -73,11 +73,15 @@ export async function currentPortalUserSafely(): Promise<PortalUser | null> {
 }
 
 export async function requirePortalUser(request: Request): Promise<PortalUser> {
+  return (await requirePortalSession(request)).user;
+}
+
+export async function requirePortalSession(request: Request): Promise<PortalSession> {
   const token = accessTokenFromRequest(request);
   if (!token) throw new PortalError(401, "AUTH_REQUIRED", "Sign in is required");
   const session = await validatedSession(token);
   if (!session) throw new PortalError(401, "AUTH_REQUIRED", "Sign in is required");
-  return session.user;
+  return session;
 }
 
 export function accessTokenFromRequest(request: Request): string | null {
